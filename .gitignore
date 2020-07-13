@@ -7,4 +7,6 @@ install
 /AAE_workspace
 venv/
 workspace/
+autoencoder_ws/experiments
+autoencoder_ws/tmp_datasets
 
