@@ -63,7 +63,7 @@ def load_meshes(obj_files, vertex_tmp_store_folder, recalculate_normals=False):
 def calc_normals(vertices):
     normals = np.empty_like(vertices)
     N = vertices.shape[0]
-    for i in range(0, N-1, 3):
+    for i in range(0, N-3, 3):
         v1 = vertices[i]
         v2 = vertices[i+1]
         v3 = vertices[i+2]

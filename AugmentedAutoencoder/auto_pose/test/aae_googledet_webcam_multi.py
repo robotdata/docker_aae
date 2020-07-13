@@ -4,6 +4,7 @@ import numpy as np
 import glob
 import imageio
 import os
+import sys
 import configparser
 import re
 import time
@@ -203,7 +204,8 @@ def detection(detection_graph, category_index, score, expand):
 
             # Start Video Stream and FPS calculation
             fps = FPS2(fps_interval).start()
-            video_stream = WebcamVideoStream(video_input,width,height).start()
+            #QIN video_stream = WebcamVideoStream(video_input,width,height).start()
+            video_stream = WebcamVideoStream(video_input,width,height)
             cur_frames = 0
             print("> Press 'q' to Exit, 'a' to start auto_pose")
             print('> Starting Detection')
@@ -250,7 +252,9 @@ def detection(detection_graph, category_index, score, expand):
                         boxes, scores, classes, num, image = c["results"][0],c["results"][1],c["results"][2],c["results"][3],c["extras"]
                 else:
                     # default session
-                    image = video_stream.read()
+                    #QIN image = video_stream.read()
+                    _, image = video_stream.stream.read()
+                    # time.sleep(0.1)
                     image_expanded = np.expand_dims(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), axis=0)
                     boxes, scores, classes, num = sess.run(
                             [detection_boxes, detection_scores, detection_classes, num_detections],
@@ -277,6 +281,7 @@ def detection(detection_graph, category_index, score, expand):
                 highest_class_score = {clas:0.0 for clas in classes}
                 for box,score, clas in zip(boxes,scores, classes):
                     if score > det_th and score > highest_class_score[clas]:
+                        print("in score > det_th")
 
                         highest_class_score[clas] = score
                         ymin, xmin, ymax, xmax = (np.array(box)*np.array([height,width,height,width])).astype(np.int32)
@@ -305,6 +310,7 @@ def detection(detection_graph, category_index, score, expand):
 
 
 
+                print("len(det_aae_bbs)", len(det_aae_bbs))
                 if len(det_aae_bbs) > 0:
 
                     Rs = []
@@ -315,7 +321,9 @@ def detection(detection_graph, category_index, score, expand):
                         ts.append(t.squeeze())
 
                     Rs = np.array(Rs)
-                    ts = np.array(ts)                                    
+                    ts = np.array(ts)
+
+                    print(Rs, ts)                               
                     
                     bgr_y,_,_ = renderer.render_many( 
                         obj_ids=np.array(det_aae_objects_k).astype(np.int32),
@@ -373,7 +381,7 @@ def detection(detection_graph, category_index, score, expand):
 
 ## LOAD CONFIG PARAMS ##
 try:
-    with open("googledet_utils/googledet_config.yml", 'r') as ymlfile:
+    with open("/home/yq/Data/23_pose_estimation/aae/AugmentedAutoencoder/auto_pose/test/googledet_utils/googledet_config.yml", 'r') as ymlfile:
         cfg = yaml.load(ymlfile)
 except:
     print 'no config file found'
@@ -426,10 +434,15 @@ color_dict = [(0,255,0),(0,0,255),(255,0,0),(255,255,0)] * 10
 graph, score, expand = load_frozenmodel()
 category = load_labelmap()
 
+print("aae_list", aae_list)
+aae_list = ["windex"]
 clas_k_map = {}
 for _,val in category.iteritems():
+    print("val", val)
     if val['name'] in aae_list:
         clas_k_map[int(val['id'])] = aae_list.index(val['name'])
 
+print("clas_k_map", clas_k_map)
+# sys.exit()
 detection(graph, category, score, expand)
 
